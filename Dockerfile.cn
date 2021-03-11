@@ -20,11 +20,13 @@ ARG mindstudio_url=${OBS_URL}/mindstudio/${MS_VER}/${MS_NAME}				   \
     cann_toolkit_aarch64_url=${MR_URL}/${CANN_URL_VER}/${CANN_ARM_NAME}		   \
     npu_driver_url=${OBS_URL}/atlas200dk/${NDR_VER}/${NDR_NAME}			
     
-ARG repo_url=http://cdimage.ubuntu.com/releases/18.04.4/release			   \
+ARG repo_url=https://mirror.sjtu.edu.cn/ubuntu-cdimage/releases/18.04.5/release	   \
     ubuntu_cd_name=ubuntu-18.04.5-server-arm64.iso				   \
     HOME=/home/xmu_atr
 
-RUN apt update 		      							&& \
+RUN sed -i s@/archive.ubuntu.com/@/ftp.sjtu.edu.cn/@g /etc/apt/sources.list 	&& \
+    sed -i s@/security.ubuntu.com/@/ftp.sjtu.edu.cn/@g /etc/apt/sources.list 	&& \
+    apt update 		      							&& \
     apt upgrade -yq 	      							&& \
     apt install -y gcc make cmake unzip zlib1g zlib1g-dev libsqlite3-dev 	   \
                    openssl libssl-dev libffi-dev pciutils net-tools     	   \
@@ -85,7 +87,11 @@ RUN wget -q ${cann_toolkit_x86_url}						&& \
     chown xmu_atr:xmu_atr $HOME/Ascend -R
     
 
-RUN pip3.7 --no-cache-dir install attrs psutil decorator numpy                     \
+RUN pip3.7 config set --global global.index-url                                    \
+                https://mirrors.sjtug.sjtu.edu.cn/pypi/web/simple               && \
+    pip3.7 config set --global global.trusted-host                                 \
+                https://mirrors.sjtug.sjtu.edu.cn/pypi/web/simple		&& \
+    pip3.7 --no-cache-dir install attrs psutil decorator numpy                     \
 		scipy sympy cffi grpcio grpcio-tools requests coverage             \
 		gnureadline pylint matplotlib PyQt5==5.14.0 	                   \
 		pyyaml tornado protobuf==3.11.3 pandas xlrd absl-py

@@ -2,7 +2,10 @@ FROM ubuntu:18.04
 LABEL maintainer="Lingxiang Zheng<lxzheng@xmu.edu.cn>"				   \
       ventor="ATR Lab, Xiamen University" 
 
-ARG installer_url=172.17.0.1:8000
+ARG installer_url=172.17.0.1:8000						   \
+    repo_url=https://mirror.sjtu.edu.cn/ubuntu-cdimage/releases/18.04.5/release	   \
+    ubuntu_cd_name=ubuntu-18.04.5-server-arm64.iso				   \
+    HOME=/home/xmu_atr
 
 
 RUN sed -i s@/archive.ubuntu.com/@/ftp.sjtu.edu.cn/@g /etc/apt/sources.list 	&& \
@@ -17,23 +20,23 @@ RUN sed -i s@/archive.ubuntu.com/@/ftp.sjtu.edu.cn/@g /etc/apt/sources.list 	&& 
 		   g++-aarch64-linux-gnu qemu-user-static binfmt-support 	   \
 		   python3-yaml gcc-aarch64-linux-gnu g++-aarch64-linux-gnu	   \
 		   autoconf automake libtool ca-certificates firefox xdg-utils 	   \
-		   fonts-droid-fallback gnome-keyring	 			&& \
+		   fonts-droid-fallback gnome-keyring squashfs-tools		&& \
     apt clean 		      							&& \
     rm -rf /var/lib/apt/lists/*	/tmp/* 						&& \
     echo "root:root" | chpasswd 						&& \
-    useradd -d /home/xmu_atr -m xmu_atr 					&& \
+    useradd -d ${HOME} -m xmu_atr 					&& \
     echo "xmu_atr:xmu_atr" | chpasswd 						&& \
-    chmod 750 /home/xmu_atr							&& \
+    chmod 750 ${HOME}								&& \
     usermod -aG sudo xmu_atr
 
-RUN cd /home/xmu_atr								&& \
+RUN cd ${HOME}									&& \
     wget -q $installer_url/Python-3.7.5.tgz					&& \
     tar -zxvf Python-3.7.5.tgz							&& \
     cd Python-3.7.5								&& \
     ./configure --prefix=/usr/local/python3.7.5 --enable-shared			&& \
     make -j8									&& \
     make install								&& \
-    cd /home/xmu_atr								&& \
+    cd ${HOME}									&& \
     rm -rf Python-3.7.5*
 
 RUN ln -s /usr/local/python3.7.5/lib/libpython3.7m.so.1.0 /usr/lib		&& \
@@ -47,7 +50,10 @@ RUN ln -s /usr/local/python3.7.5/lib/libpython3.7m.so.1.0 /usr/lib		&& \
     ln -s /usr/lib/python3/dist-packages/lsb_release.py 			   \
 	  /usr/local/python3.7.5/lib/python3.7/
 
-
+# 安装时检查是否存在用户HwHiAiUser，尽管能在安装时指定用户名绕过这个坑，
+# 但只有root用户能在安装时指定用户名，在安装过程中又要检查安装路径的所有权
+# 是否是运行安装程序的用户，所以root用户只能将软件安装在root为所有者的目录，
+# root实际上并不能为普通用户安装，那为什么还要检查用户名，这是什么鬼设计啊！
 RUN wget -q $installer_url/Ascend-cann-toolkit_20.2.alpha001_linux-x86_64.run	&& \
     chmod +x Ascend-cann-toolkit_20.2.alpha001_linux-x86_64.run			&& \
     ./Ascend-cann-toolkit_20.2.alpha001_linux-x86_64.run --install 		   \
@@ -60,17 +66,8 @@ RUN wget -q $installer_url/Ascend-cann-toolkit_20.2.alpha001_linux-x86_64.run	&&
       --install-username=xmu_atr --install-usergroup=xmu_atr			   \
       --install-for-all --install-path=/usr/local/Ascend			&& \
     rm ./Ascend-cann-toolkit_20.2.alpha001_linux-aarch64.run			&& \
-    wget -q $installer_url/A200dk-npu-driver-20.1.0-ubuntu18.04-aarch64-minirc.tar.gz && \
-    tar xzf A200dk-npu-driver-20.1.0-ubuntu18.04-aarch64-minirc.tar.gz 		   \
-	    -C /usr/local/Ascend						&& \
-    rm ./A200dk-npu-driver-20.1.0-ubuntu18.04-aarch64-minirc.tar.gz		&& \
-    wget -q $installer_url/MindStudio_2.0.0-beta3_linux.tar.gz			&& \
-    tar xzf MindStudio_2.0.0-beta3_linux.tar.gz -C /usr/local/Ascend		&& \
-    rm ./MindStudio_2.0.0-beta3_linux.tar.gz					&& \
-    cd /usr/local/Ascend/							&& \
-    chmod a+r * -R								&& \
-    find ./* -perm /+x -exec chmod a+x {} \;					&& \
-    chmod a+x ./MindStudio/tools/llvm/scripts/StartClangd.sh 
+    mv /usr/local/Ascend $HOME/							&& \
+    chown xmu_atr:xmu_atr $HOME/Ascend -R
 
 RUN pip3.7 config set --global global.index-url                                    \
                 https://mirrors.sjtug.sjtu.edu.cn/pypi/web/simple               && \
@@ -81,33 +78,41 @@ RUN pip3.7 config set --global global.index-url                                 
 		gnureadline pylint matplotlib PyQt5==5.14.0 	                   \
 		pyyaml tornado protobuf==3.11.3 pandas xlrd absl-py
 
+COPY qemu-aarch64 /usr/share/binfmts/
 USER xmu_atr
-WORKDIR /home/xmu_atr/
+WORKDIR ${HOME}
 
+RUN git clone --depth 1 https://gitee.com/ascend/tools.git ./Ascend/tools	&& \
+    wget -q ${repo_url}/${ubuntu_cd_name}					&& \
+    wget -q $installer_url/MindStudio_2.0.0-beta3_linux.tar.gz			&& \
+    tar xzf MindStudio_2.0.0-beta3_linux.tar.gz -C ./Ascend			&& \
+    rm ./MindStudio_2.0.0-beta3_linux.tar.gz					&& \
+    cd Ascend/tools/makesd/for_20.2						&& \
+    ln ${HOME}/${ubuntu_cd_name} .					   	&& \
+    wget -q 									   \
+      $installer_url/A200dk-npu-driver-20.2.0-ubuntu18.04-aarch64-minirc.tar.gz 
 
-ENV DDK_PATH=/usr/local/Ascend/ascend-toolkit/20.2.alpha001/acllib_linux.aarch64   \
-PATH=${PATH}:/usr/local/python3.7.5/bin:/usr/local/Ascend/MindStudio/bin:\
-/usr/local/Ascend/ascend-toolkit/latest/toolkit/bin:\
-/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/ccec_compiler/bin:\
-/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/bin:\
-/usr/local/Ascend/ascend-toolkit/latest/atc/ccec_compiler/bin:\
-/usr/local/Ascend/ascend-toolkit/latest/atc/bin					   \
-LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/acllib/lib64:\
-/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64:\
-/usr/local/Ascend/ascend-toolkit/latest/atc/lib64				   \
-PYTHONPATH=/usr/local/Ascend/ascend-toolkit/latest/pyACL/python/site-packages/acl:\
-/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/python/site-packages:\
-/usr/local/Ascend/ascend-toolkit/latest/atc/python/site-packages:\
-/usr/local/Ascend/ascend-toolkit/latest/toolkit/python/site-packages		   \
-ASCEND_AICPU_PATH=/usr/local/Ascend/ascend-toolkit/latest			   \
-ASCEND_OPP_PATH=/usr/local/Ascend/ascend-toolkit/latest/opp			   \
-TOOLCHAIN_HOME=/usr/local/Ascend/ascend-toolkit/latest/toolkit			   \
-ASCEND_AICPU_PATH=/usr/local/Ascend/ascend-toolkit/latest
+ENV DDK_PATH=${HOME}/Ascend/ascend-toolkit/20.2.alpha001/acllib_linux.aarch64	   \
+PATH=${PATH}:/usr/local/python3.7.5/bin:${HOME}/Ascend/MindStudio/bin:\
+${HOME}/Ascend/ascend-toolkit/latest/toolkit/bin:\
+${HOME}/Ascend/ascend-toolkit/latest/fwkacllib/ccec_compiler/bin:\
+${HOME}/Ascend/ascend-toolkit/latest/fwkacllib/bin:\
+${HOME}/Ascend/ascend-toolkit/latest/atc/ccec_compiler/bin:\
+${HOME}/Ascend/ascend-toolkit/latest/atc/bin					   \
+LD_LIBRARY_PATH=${HOME}/Ascend/ascend-toolkit/latest/acllib/lib64:\
+${HOME}/Ascend/ascend-toolkit/latest/fwkacllib/lib64:\
+${HOME}/Ascend/ascend-toolkit/latest/atc/lib64				 	   \
+PYTHONPATH=${HOME}/Ascend/ascend-toolkit/latest/pyACL/python/site-packages/acl:\
+${HOME}/Ascend/ascend-toolkit/latest/fwkacllib/python/site-packages:\
+${HOME}/Ascend/ascend-toolkit/latest/atc/python/site-packages:\
+${HOME}/Ascend/ascend-toolkit/latest/toolkit/python/site-packages		   \
+ASCEND_AICPU_PATH=${HOME}/Ascend/ascend-toolkit/latest			   	   \
+ASCEND_OPP_PATH=${HOME}/Ascend/ascend-toolkit/latest/opp			   \
+TOOLCHAIN_HOME=${HOME}/Ascend/ascend-toolkit/latest/toolkit			   \
+ASCEND_AICPU_PATH=${HOME}/Ascend/ascend-toolkit/latest				   \
+PRJ_HOME=${HOME}/AscendProject
 
-RUN mkdir -p .mindstudio/configure						&& \
-    cd .mindstudio/configure							&& \
-    echo "adk_install_root_path=/usr/local/Ascend/ascend-toolkit/20.2.alpha001"    \
-	>mindstudio.properties							&& \
-    echo "adk_version=1.77.T10.0.B100" >>mindstudio.properties
+RUN for dir in 'modelzoo' '.cache' '.config' '.local' '.mindstudio' '.ssh';do	   \
+        ln -s ${PRJ_HOME}/${dir} ${HOME}/${dir};done
 
-
+    
