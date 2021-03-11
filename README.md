@@ -33,6 +33,14 @@ docker pull lxzheng/a200dk
   * <软件目录>为存放cann-toolkit等软件包的目录
 - Dockerfile 不使用ubuntu及python源镜像，希望从华为服务器下载软件包的使用
 
+## 其他问题
+
+* 用户名，密码：xmu_atr:xmu_atr
+* root用户密码：root
+* 如果制作sd卡出现错误：“Failed: qemu is broken or the version of qemu is not compatible”，请运行下面的命令注册aarch64架构
+
+`sudo update-binfmts --import qemu-aarch64`
+
 ## License许可协议
 
 项目使用[GNU General Public License v3.0](LICENSE)协议发布
