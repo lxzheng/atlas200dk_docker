@@ -2,27 +2,27 @@ FROM ubuntu:18.04
 LABEL maintainer="Lingxiang Zheng<lxzheng@xmu.edu.cn>"				   \
       ventor="ATR Lab, Xiamen University" 
 
-ARG python_url=https://mirrors.huaweicloud.com/python/3.7.5/Python-3.7.5.tgz	   \
-    OBS_URL=https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/turing/resource	   \
-    MS_VER=2.0.0-beta3								   \
-    MR_URL=https://mirrors.huaweicloud.com/ascend/autoarchive/CANN 		   \
-    CANN_URL_VER=CANN%20V100R020C20						   \
-    CANN_VER=20.2.alpha001							   \
-    NDR_VER=20.2
+ARG python_url=https://mirrors.huaweicloud.com/python/3.7.5/Python-3.7.5.tgz	   
+ARG OBS_URL=https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/turing/resource	   
+ARG MS_VER=2.0.0-beta3							   
+ARG MR_URL=https://mirrors.huaweicloud.com/ascend/autoarchive/CANN
+ARG CANN_URL_VER=CANN%20V100R020C20
+ARG CANN_VER=20.2.alpha001							
+ARG NDR_VER=20.2
 
-ARG MS_NAME=MindStudio_${MS_VER}_linux.tar.gz					   \
-    CANN_X86_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-x86_64.run		   \
-    CANN_ARM_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-aarch64.run		   \
-    NDR_NAME=A200dk-npu-driver-${NDR_VER}.0-ubuntu18.04-aarch64-minirc.tar.gz
+ARG MS_NAME=MindStudio_${MS_VER}_linux.tar.gz					  
+ARG CANN_X86_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-x86_64.run		   
+ARG CANN_ARM_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-aarch64.run		
+ARG NDR_NAME=A200dk-npu-driver-${NDR_VER}.0-ubuntu18.04-aarch64-minirc.tar.gz
 
-ARG mindstudio_url=${OBS_URL}/mindstudio/${MS_VER}/${MS_NAME}				   \
-    cann_toolkit_x86_url=${MR_URL}/${CANN_URL_VER}/${CANN_X86_NAME}		   \
-    cann_toolkit_aarch64_url=${MR_URL}/${CANN_URL_VER}/${CANN_ARM_NAME}		   \
-    npu_driver_url=${OBS_URL}/atlas200dk/${NDR_VER}/${NDR_NAME}			
+ARG mindstudio_url=${OBS_URL}/mindstudio/${MS_VER}/${MS_NAME}			
+ARG cann_toolkit_x86_url=${MR_URL}/${CANN_URL_VER}/${CANN_X86_NAME}	
+ARG cann_toolkit_aarch64_url=${MR_URL}/${CANN_URL_VER}/${CANN_ARM_NAME}	
+ARG npu_driver_url=${OBS_URL}/atlas200dk/${NDR_VER}/${NDR_NAME}			
     
-ARG repo_url=http://cdimage.ubuntu.com/releases/18.04.4/release			   \
-    ubuntu_cd_name=ubuntu-18.04.5-server-arm64.iso				   \
-    HOME=/home/xmu_atr
+ARG repo_url=http://cdimage.ubuntu.com/releases/18.04.4/release		
+ARG ubuntu_cd_name=ubuntu-18.04.5-server-arm64.iso			
+ARG HOME=/home/xmu_atr
 
 RUN apt update 		      							&& \
     apt upgrade -yq 	      							&& \
