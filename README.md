@@ -2,6 +2,8 @@
 
 ## 镜像下载
 
+以下操作需使用docker，如果未安装，需要先[安装Docker](#安装Docker)。）
+
 docker pull lxzheng/a200dk
 
 ## 启动容器
@@ -47,6 +49,66 @@ docker pull lxzheng/a200dk
 
 * 用户名，密码：xmu_atr:xmu_atr
 * root用户密码：root
+
+## 安装Docker
+
+以下说明在ubuntu安装docker的方法
+
+- 安装软件包，允许apt使用https
+
+  ```
+  $ sudo apt-get update
+  
+  $ sudo apt-get install \
+      apt-transport-https \
+      ca-certificates \
+      curl \
+      gnupg \
+      lsb-release
+  ```
+
+- 添加Docker源的GPG key
+
+  ```
+  $ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  ```
+
+  此处的https://download.docker.com可以使用国内镜像源代替，比如用https://mirror.sjtu.edu.cn/docker-ce/替换，改成:
+
+  ```
+  curl -fsSL https://mirror.sjtu.edu.cn/docker-ce/linux/ubuntu/gpg | sudo apt-key add -
+  ```
+
+- 添加Docker源
+
+  ```bash
+  sudo add-apt-repository \
+     "deb [arch=amd64] https://mirror.sjtu.edu.cn/docker-ce/linux/ubuntu \
+     $(lsb_release -cs) \
+     stable"
+  ```
+
+- 安装Docker软件包
+
+  ```
+  sudo apt-get update
+  sudo apt-get install docker-ce
+  ```
+
+- 添加国内docker HUB镜像
+
+  添加docker HUB国内镜像，可以加速`docker pull`等需要下载镜像的命令
+
+  编辑或新建`/etc/docker/daemon.json`文件，向其中添加`registry-mirrors`项，使最终配置为
+
+  ```
+  
+  {
+    "registry-mirrors": ["https://docker.mirrors.sjtug.sjtu.edu.cn"]
+  }
+  ```
+
+  
 
 ## 制作Docker 镜像
 
