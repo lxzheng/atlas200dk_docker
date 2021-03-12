@@ -6,6 +6,10 @@ docker pull lxzheng/a200dk
 
 ## 启动容器
 
+克隆代码
+
+`git clone https://github.com/lxzheng/atlas200dk_docker.git`
+
 用下面的命令启动容器，进入开发环境
 
 - ./start-a200-dev-container.sh <docker_image> [bind_dir]
@@ -37,7 +41,7 @@ docker pull lxzheng/a200dk
 
 * 用户名，密码：xmu_atr:xmu_atr
 * root用户密码：root
-* 如果制作sd卡出现错误：“Failed: qemu is broken or the version of qemu is not compatible”，请运行下面的命令注册aarch64架构
+* 如果在容器中制作sd卡出现错误：“Failed: qemu is broken or the version of qemu is not compatible”，请运行下面的命令注册aarch64架构（在容器内运行）
 
 `sudo update-binfmts --import qemu-aarch64`
 
