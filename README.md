@@ -110,6 +110,17 @@ docker pull lxzheng/a200dk
   }
   ```
 
+- 以普通用户身份使用docker
+
+   docker服务进程都是以root的身份运行，为了避免每次运行docker命令的时候都需要用sudo，让普通用户有直接运行docker的权限，可将用户加入docker用户组。以下命令将当前用户加入docker用户组，使其能运行docker。
+    ```
+    sudo usermod -G docker -a `id -un`
+    ```
+   然后重启docker服务
+    ```
+    sudo systemctl restart docker
+    ```
+   重新登录之后，当前用户就可以直接操作docker了
   
 
 ## 制作Docker 镜像
