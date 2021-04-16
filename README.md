@@ -19,8 +19,28 @@ docker pull lxzheng/a200dk
 - `./start-a200-dev-container.sh <docker_image> [bind_dir]`
   - docker_image：镜像名字
   - bind_dir:主机上的目录，映射到容器，用于项目文件存储，同时也将配置文件保存到该目录。默认使用../Projects目录,若该目录不存在，将会自动创建。
-- 例：`./start-a200-dev-container.sh lxzheng/a200dk:latest ../Projects`
+- 例：`./start-a200-dev-container.sh lxzheng/a200dk:latest $PWD/../Projects`
 
+## 烧写SD卡
+制作Atlas200DK开发板运行的SD卡
+1. 启动开发环境容器
+1. 进入工具目录，烧写SD卡
+```
+sudo update-binfmts --import qemu-aarch64
+~/Ascend/tools/makesd/for_20.2
+python3 make_sd_card.py local /dev/<sd卡设备名>
+```
+## 连接开发板，测试SD卡
+1. 通过Typec数据线把开发板和电脑连到一起
+2. 打开一个终端，输入`dmesg|grep rndis_host`命令查找虚拟网卡名字
+3. 配置netplan
+```
+gedit /etc/netplan/01-network-manager-all.yaml
+```
+4. 更新配置
+```
+sudo netplan apply
+```
 
 
 ## 软件及版本
@@ -48,7 +68,7 @@ docker pull lxzheng/a200dk
   ```sudo update-binfmts --import qemu-aarch64```
 
 ## 用户名及密码
-
+开发环境用户名及密码
 * 用户名，密码：xmu_atr:xmu_atr
 * root用户密码：root
 
