@@ -15,10 +15,13 @@ ARG CANN_X86_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-x86_64.run
 ARG CANN_ARM_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-aarch64.run		
 ARG NDR_NAME=A200dk-npu-driver-${NDR_VER}.0-ubuntu18.04-aarch64-minirc.tar.gz
 
+ARG NNRT_NAME=Ascend-cann-nnrt_${CANN_VER}_linux-aarch64.run
+
 ARG mindstudio_url=${OBS_URL}/mindstudio/${MS_VER}/${MS_NAME}			
 ARG cann_toolkit_x86_url=${MR_URL}/${CANN_URL_VER}/${CANN_X86_NAME}	
 ARG cann_toolkit_aarch64_url=${MR_URL}/${CANN_URL_VER}/${CANN_ARM_NAME}	
-ARG npu_driver_url=${OBS_URL}/atlas200dk/${NDR_VER}/${NDR_NAME}			
+ARG npu_driver_url=${OBS_URL}/atlas200dk/${NDR_VER}/${NDR_NAME}		
+ARG nnrt_url=${MR_URL}/${CANN_URL_VER}/${NNRT_NAME}
     
 ARG repo_url=http://cdimage.ubuntu.com/releases/18.04.4/release		
 ARG ubuntu_cd_name=ubuntu-18.04.5-server-arm64.iso			
@@ -102,6 +105,8 @@ RUN git clone --depth 1 https://gitee.com/ascend/tools.git ./Ascend/tools	&& \
     cd Ascend/tools/makesd/for_${NDR_VER}					&& \
     ln ${HOME}/${ubuntu_cd_name} .					   	&& \
     wget -q ${npu_driver_url} 
+  && \
+    wget -q ${nnrt_url}
 
 ENV DDK_PATH=${HOME}/Ascend/ascend-toolkit/${CANN_VER}/acllib_linux.aarch64	   \
 PATH=${PATH}:/usr/local/python3.7.5/bin:${HOME}/Ascend/MindStudio/bin:\

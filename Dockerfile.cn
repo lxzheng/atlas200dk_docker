@@ -2,30 +2,35 @@ FROM ubuntu:18.04
 LABEL maintainer="Lingxiang Zheng<lxzheng@xmu.edu.cn>"				   \
       ventor="ATR Lab, Xiamen University" 
 
-ARG python_url=https://mirrors.huaweicloud.com/python/3.7.5/Python-3.7.5.tgz	   \
-    OBS_URL=https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/turing/resource	   \
-    MS_VER=2.0.0-beta3								   \
-    MR_URL=https://mirrors.huaweicloud.com/ascend/autoarchive/CANN 		   \
-    CANN_URL_VER=CANN%20V100R020C20						   \
-    CANN_VER=20.2.alpha001							   \
-    NDR_VER=20.2
+ARG python_url=https://mirrors.huaweicloud.com/python/3.7.5/Python-3.7.5.tgz	   
+ARG OBS_URL=https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/turing/resource	   
+ARG MS_VER=2.0.0-beta3							   
+ARG MR_URL=https://mirrors.huaweicloud.com/ascend/autoarchive/CANN
+ARG CANN_URL_VER=CANN%20V100R020C20
+ARG CANN_VER=20.2.alpha001							
+ARG NDR_VER=20.2
 
-ARG MS_NAME=MindStudio_${MS_VER}_linux.tar.gz					   \
-    CANN_X86_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-x86_64.run		   \
-    CANN_ARM_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-aarch64.run		   \
-    NDR_NAME=A200dk-npu-driver-${NDR_VER}.0-ubuntu18.04-aarch64-minirc.tar.gz
+ARG MS_NAME=MindStudio_${MS_VER}_linux.tar.gz					  
+ARG CANN_X86_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-x86_64.run		   
+ARG CANN_ARM_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-aarch64.run		
+ARG NDR_NAME=A200dk-npu-driver-${NDR_VER}.0-ubuntu18.04-aarch64-minirc.tar.gz
 
-ARG mindstudio_url=${OBS_URL}/mindstudio/${MS_VER}/${MS_NAME}				   \
-    cann_toolkit_x86_url=${MR_URL}/${CANN_URL_VER}/${CANN_X86_NAME}		   \
-    cann_toolkit_aarch64_url=${MR_URL}/${CANN_URL_VER}/${CANN_ARM_NAME}		   \
-    npu_driver_url=${OBS_URL}/atlas200dk/${NDR_VER}/${NDR_NAME}			
+ARG NNRT_NAME=Ascend-cann-nnrt_${CANN_VER}_linux-aarch64.run
+
+ARG mindstudio_url=${OBS_URL}/mindstudio/${MS_VER}/${MS_NAME}			
+ARG cann_toolkit_x86_url=${MR_URL}/${CANN_URL_VER}/${CANN_X86_NAME}	
+ARG cann_toolkit_aarch64_url=${MR_URL}/${CANN_URL_VER}/${CANN_ARM_NAME}	
+ARG npu_driver_url=${OBS_URL}/atlas200dk/${NDR_VER}/${NDR_NAME}		
+ARG nnrt_url=${MR_URL}/${CANN_URL_VER}/${NNRT_NAME}
     
-ARG repo_url=https://mirror.sjtu.edu.cn/ubuntu-cdimage/releases/18.04.5/release	   \
-    ubuntu_cd_name=ubuntu-18.04.5-server-arm64.iso				   \
-    HOME=/home/xmu_atr
+ARG repo_url=https://mirror.sjtu.edu.cn/ubuntu-cdimage/releases/18.04.5/release	
+ARG ubuntu_cd_name=ubuntu-18.04.5-server-arm64.iso			
+ARG HOME=/home/xmu_atr
+ARG cn_repo=ftp.sjtu.edu.cn
+ARG py_repo=https://mirrors.sjtug.sjtu.edu.cn/pypi/web/simple
 
-RUN sed -i s@/archive.ubuntu.com/@/ftp.sjtu.edu.cn/@g /etc/apt/sources.list 	&& \
-    sed -i s@/security.ubuntu.com/@/ftp.sjtu.edu.cn/@g /etc/apt/sources.list 	&& \
+RUN sed -i s@/archive.ubuntu.com/@/${cn_repo}/@g /etc/apt/sources.list 	&& \
+    sed -i s@/security.ubuntu.com/@/${cn_repo}/@g /etc/apt/sources.list 	&& \
     apt update 		      							&& \
     apt upgrade -yq 	      							&& \
     apt install -y gcc make cmake unzip zlib1g zlib1g-dev libsqlite3-dev 	   \
@@ -87,10 +92,8 @@ RUN wget -q ${cann_toolkit_x86_url}						&& \
     chown xmu_atr:xmu_atr $HOME/Ascend -R
     
 
-RUN pip3.7 config set --global global.index-url                                    \
-                https://mirrors.sjtug.sjtu.edu.cn/pypi/web/simple               && \
-    pip3.7 config set --global global.trusted-host                                 \
-                https://mirrors.sjtug.sjtu.edu.cn/pypi/web/simple		&& \
+RUN pip3.7 config set --global global.index-url ${py_repo}                      && \
+    pip3.7 config set --global global.trusted-host ${py_repo}                   && \
     pip3.7 --no-cache-dir install attrs psutil decorator numpy                     \
 		scipy sympy cffi grpcio grpcio-tools requests coverage             \
 		gnureadline pylint matplotlib PyQt5==5.14.0 	                   \
@@ -108,6 +111,8 @@ RUN git clone --depth 1 https://gitee.com/ascend/tools.git ./Ascend/tools	&& \
     cd Ascend/tools/makesd/for_${NDR_VER}					&& \
     ln ${HOME}/${ubuntu_cd_name} .					   	&& \
     wget -q ${npu_driver_url} 
+  && \
+    wget -q ${nnrt_url}
 
 ENV DDK_PATH=${HOME}/Ascend/ascend-toolkit/${CANN_VER}/acllib_linux.aarch64	   \
 PATH=${PATH}:/usr/local/python3.7.5/bin:${HOME}/Ascend/MindStudio/bin:\
