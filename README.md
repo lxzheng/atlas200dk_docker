@@ -61,11 +61,13 @@ sudo netplan apply
 
 - ascend-toolkit：cann-toolkit 安装目录，包括X86_64和AARCH64两种CPU架构的包
 
-- tools：昇腾工具仓库，其中makesd/for_20.2目录已下载了A200dk-npu-driver及arm64的ubuntu 18.04.5镜像，可直接用于烧录A200DK的TF卡。
+- tools：昇腾工具仓库，其中```makesd/for_1.0.9.alpha```目录已下载了A200dk-npu-driver及arm64的ubuntu 18.04.5镜像，可直接用于烧录A200DK的TF卡。
 
-  - 如果在制作sd卡出现错误：“Failed: qemu is broken or the version of qemu is not compatible”，请运行下面的命令注册aarch64架构（在容器内运行）
+  - 如果在制作sd卡出现错误：“Failed: qemu is broken or the version of qemu is not compatible”，请运行下面的命令注册aarch64架构（在主机上运行）
 
-  ```sudo update-binfmts --import qemu-aarch64```
+  ```sudo update-binfmts --import qemu-aarch64 --importdir=<qemu-aarch64文件所在目录>```
+  qemu-aarch64在本代码库提供
+
 
 ## 用户名及密码
 开发环境用户名及密码
