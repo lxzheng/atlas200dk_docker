@@ -9,6 +9,7 @@ ARG MR_URL=https://mirrors.huaweicloud.com/ascend/autoarchive/CANN
 ARG CANN_URL_VER=CANN%20V100R020C20
 ARG CANN_VER=20.2.alpha001							
 ARG NDR_VER=20.2
+ARG NEW_NDR_VER=1.0.9.alpha
 
 ARG MS_NAME=MindStudio_${MS_VER}_linux.tar.gz					  
 ARG CANN_X86_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-x86_64.run		   
@@ -108,7 +109,7 @@ RUN git clone --depth 1 https://gitee.com/ascend/tools.git ./Ascend/tools	&& \
     wget -q ${mindstudio_url}							&& \
     tar xzf ${MS_NAME} -C ./Ascend						&& \
     rm ./${MS_NAME}								&& \
-    cd Ascend/tools/makesd/for_${NDR_VER}					&& \
+    cd Ascend/tools/makesd/for_${NEW_NDR_VER}					&& \
     ln ${HOME}/${ubuntu_cd_name} .					   	&& \
     wget -q ${npu_driver_url} 							&& \
     wget -q ${nnrt_url}
