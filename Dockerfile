@@ -104,8 +104,7 @@ RUN git clone --depth 1 https://gitee.com/ascend/tools.git ./Ascend/tools	&& \
     rm ./${MS_NAME}								&& \
     cd Ascend/tools/makesd/for_${NDR_VER}					&& \
     ln ${HOME}/${ubuntu_cd_name} .					   	&& \
-    wget -q ${npu_driver_url} 
-  && \
+    wget -q ${npu_driver_url} 							&& \
     wget -q ${nnrt_url}
 
 ENV DDK_PATH=${HOME}/Ascend/ascend-toolkit/${CANN_VER}/acllib_linux.aarch64	   \
