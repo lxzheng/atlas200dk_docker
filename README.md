@@ -23,35 +23,54 @@ docker pull lxzheng/a200dk
 
 ## 烧写SD卡
 制作Atlas200DK开发板运行的SD卡
-1. 启动开发环境容器
-1. 进入工具目录，烧写SD卡
+1. 在主机上通过binfmt_misc接口注册aarch64架构的支持
+
+   ```
+   sudo update-binfmts --import qemu-aarch64 --importdir=<qemu-aarch64文件所在目录（clone到本地的代码库目录）>
+   ```
+
+1. 在容器环境中，进入工具目录，烧写SD卡
 ```
-sudo update-binfmts --import qemu-aarch64
-~/Ascend/tools/makesd/for_20.2
-python3 make_sd_card.py local /dev/<sd卡设备名>
+cd ~/Ascend/tools/makesd/for_1.0.9.alpha
+sudo python3 make_sd_card.py local /dev/<sd卡设备名>
 ```
 ## 连接开发板，测试SD卡
-1. 通过Typec数据线把开发板和电脑连到一起
-2. 打开一个终端，输入`dmesg|grep rndis_host`命令查找虚拟网卡名字
-3. 配置netplan
+1. 将SD卡插入开发板，上电并等待启动完成（4个LED灯全亮）。
+2. 通过Typec数据线把开发板和电脑连到一起
+3. 打开一个终端，输入`dmesg|grep rndis_host`命令查找虚拟网卡名字
+4. 配置netplan
 ```
 gedit /etc/netplan/01-network-manager-all.yaml
+```
+文件内容如下
+```
+network:
+  version: 2
+  renderer: NetworkManager
+  ethernets:
+        enp0s20f0u10: #网卡名字，根据实际情况修改
+            dhcp4: no
+            addresses: [192.168.1.223/8]
 ```
 4. 更新配置
 ```
 sudo netplan apply
 ```
-
-
+5. ssh连接开发板
+```
+ssh HwHiAiUser@192.168.1.2
+```
+   密码：Mind@123
 ## 软件及版本
 
 镜像使用了以下软件
 
 - ubuntu 18.04
 - python-3.7.5
-- cann-toolkit  X86_64/AARCH64 v20.2.alpha001
+- cann-toolkit  X86_64/AARCH64 v20.2.alpha001（即新的版本号3.2.0.alpha001）
 - MindStudio  v2.0.0-beta3
 - A200dk-npu-driver v20.2
+- cann-nnrt  AARCH64 v20.2.alpha001
 
 ## 安装目录说明
 
@@ -63,10 +82,10 @@ sudo netplan apply
 
 - tools：昇腾工具仓库，其中```makesd/for_1.0.9.alpha```目录已下载了A200dk-npu-driver及arm64的ubuntu 18.04.5镜像，可直接用于烧录A200DK的TF卡。
 
-  - 如果在制作sd卡出现错误：“Failed: qemu is broken or the version of qemu is not compatible”，请运行下面的命令注册aarch64架构（在主机上运行）
+  - 如果在制作sd卡出现错误：“Failed: qemu is broken or the version of qemu is not compatible”，请运行下面的命令注册aarch64架构（在主机上运行该命令）
 
-  ```sudo update-binfmts --import qemu-aarch64 --importdir=<qemu-aarch64文件所在目录>```
-  qemu-aarch64在本代码库提供
+  ```sudo update-binfmts --import qemu-aarch64 --importdir=<qemu-aarch64文件所在目录（clone到本地的代码库目录）>```
+  
 
 
 ## 用户名及密码
@@ -143,7 +162,7 @@ sudo netplan apply
     sudo systemctl restart docker
     ```
    重新登录之后，当前用户就可以直接操作docker了
-  
+
 
 ## 制作Docker 镜像
 

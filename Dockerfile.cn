@@ -2,7 +2,18 @@ FROM ubuntu:18.04
 LABEL maintainer="Lingxiang Zheng<lxzheng@xmu.edu.cn>"				   \
       ventor="ATR Lab, Xiamen University" 
 
-ARG python_url=https://mirrors.huaweicloud.com/python/3.7.5/Python-3.7.5.tgz	   
+ARG USER=xmu_atr
+ARG HOME=/home/${USER}
+
+ARG cn_repo=ftp.sjtu.edu.cn
+ARG py_repo=https://mirrors.sjtug.sjtu.edu.cn/pypi/web/simple
+
+ARG ubuntu_repo=https://mirror.sjtu.edu.cn/ubuntu-cdimage/releases/18.04.5/release	
+ARG ubuntu_cd_name=ubuntu-18.04.5-server-arm64.iso	
+ARG ubuntu_url=${ubuntu_repo}/${ubuntu_cd_name}
+
+ARG python_pkg=Python-3.7.5.tgz
+ARG python_url=https://mirrors.huaweicloud.com/python/3.7.5/${python_pkg}	   
 ARG OBS_URL=https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/turing/resource	   
 ARG MS_VER=2.0.0-beta3							   
 ARG MR_URL=https://mirrors.huaweicloud.com/ascend/autoarchive/CANN
@@ -24,13 +35,7 @@ ARG cann_toolkit_aarch64_url=${MR_URL}/${CANN_URL_VER}/${CANN_ARM_NAME}
 ARG npu_driver_url=${OBS_URL}/atlas200dk/${NDR_VER}/${NDR_NAME}		
 ARG nnrt_url=${MR_URL}/${CANN_URL_VER}/${NNRT_NAME}
     
-ARG repo_url=https://mirror.sjtu.edu.cn/ubuntu-cdimage/releases/18.04.5/release	
-ARG ubuntu_cd_name=ubuntu-18.04.5-server-arm64.iso			
-ARG HOME=/home/xmu_atr
-ARG cn_repo=ftp.sjtu.edu.cn
-ARG py_repo=https://mirrors.sjtug.sjtu.edu.cn/pypi/web/simple
-
-RUN sed -i s@/archive.ubuntu.com/@/${cn_repo}/@g /etc/apt/sources.list 	&& \
+RUN sed -i s@/archive.ubuntu.com/@/${cn_repo}/@g /etc/apt/sources.list 		&& \
     sed -i s@/security.ubuntu.com/@/${cn_repo}/@g /etc/apt/sources.list 	&& \
     apt update 		      							&& \
     apt upgrade -yq 	      							&& \
@@ -46,20 +51,20 @@ RUN sed -i s@/archive.ubuntu.com/@/${cn_repo}/@g /etc/apt/sources.list 	&& \
     apt clean 		      							&& \
     rm -rf /var/lib/apt/lists/*	/tmp/* 						&& \
     echo "root:root" | chpasswd 						&& \
-    useradd -d ${HOME} -m xmu_atr 						&& \
-    echo "xmu_atr:xmu_atr" | chpasswd 						&& \
+    useradd -d ${HOME} -m ${USER}	 					&& \
+    echo "${USER}:${USER}" | chpasswd 						&& \
     chmod 750 ${HOME}								&& \
-    usermod -aG sudo xmu_atr
+    usermod -aG sudo ${USER}
 
 RUN cd ${HOME}									&& \
-    wget -q $python_url								&& \
-    tar -zxvf Python-3.7.5.tgz							&& \
-    cd Python-3.7.5								&& \
-    ./configure --prefix=/usr/local/python3.7.5 --enable-shared			&& \
+    wget -q ${python_url}							&& \
+    tar -zxvf ${python_pkg}							&& \
+    cd ${python_pkg%.*}								&& \
+    ./configure --prefix=/usr/local/${python_pkg%.*} --enable-shared		&& \
     make -j8									&& \
     make install								&& \
     cd ${HOME}									&& \
-    rm -rf Python-3.7.5*
+    rm -rf ${python_pkg%.*}*
 
 RUN ln -s /usr/local/python3.7.5/lib/libpython3.7m.so.1.0 /usr/lib		&& \
     rm /usr/bin/python3								&& \
@@ -80,17 +85,17 @@ RUN ln -s /usr/local/python3.7.5/lib/libpython3.7m.so.1.0 /usr/lib		&& \
 RUN wget -q ${cann_toolkit_x86_url}						&& \
     chmod +x ./${CANN_X86_NAME}							&& \
     ./${CANN_X86_NAME} --install				 		   \
-      --install-username=xmu_atr --install-usergroup=xmu_atr			   \
+      --install-username=${USER} --install-usergroup=${USER}			   \
       --install-for-all --install-path=/usr/local/Ascend			&& \
     rm ./${CANN_X86_NAME}							&& \
     wget -q ${cann_toolkit_aarch64_url}						&& \
     chmod +x ${CANN_ARM_NAME}							&& \
     ./${CANN_ARM_NAME} --install				 		   \
-      --install-username=xmu_atr --install-usergroup=xmu_atr			   \
+      --install-username=${USER} --install-usergroup=${USER}			   \
       --install-for-all --install-path=/usr/local/Ascend			&& \
     rm ./${CANN_ARM_NAME}							&& \
     mv /usr/local/Ascend $HOME/							&& \
-    chown xmu_atr:xmu_atr $HOME/Ascend -R
+    chown ${USER}:${USER} $HOME/Ascend -R
     
 
 RUN pip3.7 config set --global global.index-url ${py_repo}                      && \
@@ -101,11 +106,11 @@ RUN pip3.7 config set --global global.index-url ${py_repo}                      
 		pyyaml tornado protobuf==3.11.3 pandas xlrd absl-py
 
 COPY qemu-aarch64 /usr/share/binfmts/
-USER xmu_atr
+USER ${USER}
 WORKDIR ${HOME}
 
 RUN git clone --depth 1 https://gitee.com/ascend/tools.git ./Ascend/tools	&& \
-    wget -q ${repo_url}/${ubuntu_cd_name}					&& \
+    wget -q ${ubuntu_url}							&& \
     wget -q ${mindstudio_url}							&& \
     tar xzf ${MS_NAME} -C ./Ascend						&& \
     rm ./${MS_NAME}								&& \

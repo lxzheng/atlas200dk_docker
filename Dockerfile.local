@@ -2,14 +2,39 @@ FROM ubuntu:18.04
 LABEL maintainer="Lingxiang Zheng<lxzheng@xmu.edu.cn>"				   \
       ventor="ATR Lab, Xiamen University" 
 
-ARG installer_url=172.17.0.1:8000						   \
-    repo_url=https://mirror.sjtu.edu.cn/ubuntu-cdimage/releases/18.04.5/release	   \
-    ubuntu_cd_name=ubuntu-18.04.5-server-arm64.iso				   \
-    HOME=/home/xmu_atr
+ARG USER=xmu_atr
+ARG HOME=/home/${USER}
 
+ARG installer_url=172.17.0.1:8000						   
+ARG cn_repo=ftp.sjtu.edu.cn
+ARG py_repo=https://mirrors.sjtug.sjtu.edu.cn/pypi/web/simple
 
-RUN sed -i s@/archive.ubuntu.com/@/ftp.sjtu.edu.cn/@g /etc/apt/sources.list 	&& \
-    sed -i s@/security.ubuntu.com/@/ftp.sjtu.edu.cn/@g /etc/apt/sources.list 	&& \
+ARG ubuntu_cd_name=ubuntu-18.04.5-server-arm64.iso	
+ARG ubuntu_url=${installer_url}/${ubuntu_cd_name}
+
+ARG python_pkg=Python-3.7.5.tgz
+ARG python_url=${installer_url}/${python_pkg}
+
+ARG MS_VER=2.0.0-beta3							   
+ARG CANN_VER=20.2.alpha001							
+ARG NDR_VER=20.2
+ARG NEW_NDR_VER=1.0.9.alpha
+
+ARG MS_NAME=MindStudio_${MS_VER}_linux.tar.gz					  
+ARG CANN_X86_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-x86_64.run		   
+ARG CANN_ARM_NAME=Ascend-cann-toolkit_${CANN_VER}_linux-aarch64.run		
+ARG NDR_NAME=A200dk-npu-driver-${NDR_VER}.0-ubuntu18.04-aarch64-minirc.tar.gz
+
+ARG NNRT_NAME=Ascend-cann-nnrt_${CANN_VER}_linux-aarch64.run
+
+ARG mindstudio_url=${installer_url}/${MS_NAME}			
+ARG cann_toolkit_x86_url=${installer_url}/${CANN_X86_NAME}	
+ARG cann_toolkit_aarch64_url=${installer_url}/${CANN_ARM_NAME}	
+ARG npu_driver_url=${installer_url}/${NDR_NAME}		
+ARG nnrt_url=${installer_url}/${NNRT_NAME}
+
+RUN sed -i s@/archive.ubuntu.com/@/${cn_repo}/@g /etc/apt/sources.list 		&& \
+    sed -i s@/security.ubuntu.com/@/${cn_repo}/@g /etc/apt/sources.list 	&& \
     apt update 		      							&& \
     apt upgrade -yq 	      							&& \
     apt install -y gcc make cmake unzip zlib1g zlib1g-dev libsqlite3-dev 	   \
@@ -24,20 +49,20 @@ RUN sed -i s@/archive.ubuntu.com/@/ftp.sjtu.edu.cn/@g /etc/apt/sources.list 	&& 
     apt clean 		      							&& \
     rm -rf /var/lib/apt/lists/*	/tmp/* 						&& \
     echo "root:root" | chpasswd 						&& \
-    useradd -d ${HOME} -m xmu_atr 					&& \
-    echo "xmu_atr:xmu_atr" | chpasswd 						&& \
+    useradd -d ${HOME} -m ${USER}	 					&& \
+    echo "${USER}:${USER}" | chpasswd 						&& \
     chmod 750 ${HOME}								&& \
-    usermod -aG sudo xmu_atr
+    usermod -aG sudo ${USER}
 
 RUN cd ${HOME}									&& \
-    wget -q $installer_url/Python-3.7.5.tgz					&& \
-    tar -zxvf Python-3.7.5.tgz							&& \
-    cd Python-3.7.5								&& \
-    ./configure --prefix=/usr/local/python3.7.5 --enable-shared			&& \
+    wget -q ${python_url}							&& \
+    tar -zxvf ${python_pkg}							&& \
+    cd ${python_pkg%.*}								&& \
+    ./configure --prefix=/usr/local/${python_pkg%.*} --enable-shared		&& \
     make -j8									&& \
     make install								&& \
     cd ${HOME}									&& \
-    rm -rf Python-3.7.5*
+    rm -rf ${python_pkg%.*}*
 
 RUN ln -s /usr/local/python3.7.5/lib/libpython3.7m.so.1.0 /usr/lib		&& \
     rm /usr/bin/python3								&& \
@@ -54,45 +79,43 @@ RUN ln -s /usr/local/python3.7.5/lib/libpython3.7m.so.1.0 /usr/lib		&& \
 # 但只有root用户能在安装时指定用户名，在安装过程中又要检查安装路径的所有权
 # 是否是运行安装程序的用户，所以root用户只能将软件安装在root为所有者的目录，
 # root实际上并不能为普通用户安装，那为什么还要检查用户名，这是什么鬼设计啊！
-RUN wget -q $installer_url/Ascend-cann-toolkit_20.2.alpha001_linux-x86_64.run	&& \
-    chmod +x Ascend-cann-toolkit_20.2.alpha001_linux-x86_64.run			&& \
-    ./Ascend-cann-toolkit_20.2.alpha001_linux-x86_64.run --install 		   \
-      --install-username=xmu_atr --install-usergroup=xmu_atr			   \
+RUN wget -q ${cann_toolkit_x86_url}						&& \
+    chmod +x ./${CANN_X86_NAME}							&& \
+    ./${CANN_X86_NAME} --install 						   \
+      --install-username=${USER} --install-usergroup=${USER}			   \
       --install-for-all --install-path=/usr/local/Ascend			&& \
-    rm ./Ascend-cann-toolkit_20.2.alpha001_linux-x86_64.run			&& \
-    wget -q $installer_url/Ascend-cann-toolkit_20.2.alpha001_linux-aarch64.run	&& \
-    chmod +x Ascend-cann-toolkit_20.2.alpha001_linux-aarch64.run		&& \
-    ./Ascend-cann-toolkit_20.2.alpha001_linux-aarch64.run --install 		   \
-      --install-username=xmu_atr --install-usergroup=xmu_atr			   \
+    rm ./${CANN_X86_NAME}							&& \
+    wget -q ${cann_toolkit_aarch64_url}						&& \
+    chmod +x ${CANN_ARM_NAME}							&& \
+    ./${CANN_ARM_NAME} --install				 		   \
+      --install-username=${USER} --install-usergroup=${USER}			   \
       --install-for-all --install-path=/usr/local/Ascend			&& \
-    rm ./Ascend-cann-toolkit_20.2.alpha001_linux-aarch64.run			&& \
+    rm ./${CANN_ARM_NAME}							&& \
     mv /usr/local/Ascend $HOME/							&& \
-    chown xmu_atr:xmu_atr $HOME/Ascend -R
+    chown ${USER}:${USER} $HOME/Ascend -R
 
-RUN pip3.7 config set --global global.index-url                                    \
-                https://mirrors.sjtug.sjtu.edu.cn/pypi/web/simple               && \
-    pip3.7 config set --global global.trusted-host                                 \
-                https://mirrors.sjtug.sjtu.edu.cn/pypi/web/simple		&& \
+RUN pip3.7 config set --global global.index-url ${py_repo}                      && \
+    pip3.7 config set --global global.trusted-host ${py_repo}                   && \
     pip3.7 --no-cache-dir install attrs psutil decorator numpy                     \
 		scipy sympy cffi grpcio grpcio-tools requests coverage             \
 		gnureadline pylint matplotlib PyQt5==5.14.0 	                   \
 		pyyaml tornado protobuf==3.11.3 pandas xlrd absl-py
 
 COPY qemu-aarch64 /usr/share/binfmts/
-USER xmu_atr
+USER ${USER}
 WORKDIR ${HOME}
 
 RUN git clone --depth 1 https://gitee.com/ascend/tools.git ./Ascend/tools	&& \
-    wget -q ${repo_url}/${ubuntu_cd_name}					&& \
-    wget -q $installer_url/MindStudio_2.0.0-beta3_linux.tar.gz			&& \
-    tar xzf MindStudio_2.0.0-beta3_linux.tar.gz -C ./Ascend			&& \
-    rm ./MindStudio_2.0.0-beta3_linux.tar.gz					&& \
-    cd Ascend/tools/makesd/for_20.2						&& \
+    wget -q ${ubuntu_url}							&& \
+    wget -q ${mindstudio_url}							&& \
+    tar xzf ${MS_NAME} -C ./Ascend						&& \
+    rm ./${MS_NAME}								&& \
+    cd Ascend/tools/makesd/for_${NEW_NDR_VER}					&& \
     ln ${HOME}/${ubuntu_cd_name} .					   	&& \
-    wget -q 									   \
-      $installer_url/A200dk-npu-driver-20.2.0-ubuntu18.04-aarch64-minirc.tar.gz 
+    wget -q ${npu_driver_url} 							&& \
+    wget -q ${nnrt_url}
 
-ENV DDK_PATH=${HOME}/Ascend/ascend-toolkit/20.2.alpha001/acllib_linux.aarch64	   \
+ENV DDK_PATH=${HOME}/Ascend/ascend-toolkit/${CANN_VER}/acllib_linux.aarch64	   \
 PATH=${PATH}:/usr/local/python3.7.5/bin:${HOME}/Ascend/MindStudio/bin:\
 ${HOME}/Ascend/ascend-toolkit/latest/toolkit/bin:\
 ${HOME}/Ascend/ascend-toolkit/latest/fwkacllib/ccec_compiler/bin:\
