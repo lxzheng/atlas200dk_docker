@@ -60,7 +60,7 @@ RUN cd ${HOME}									&& \
     wget -q ${python_url}							&& \
     tar -zxvf ${python_pkg}							&& \
     cd ${python_pkg%.*}								&& \
-    ./configure --prefix=/usr/local/${python_pkg%.*} --enable-shared		&& \
+    ./configure --prefix=/usr/local/python3.7.5 --enable-shared			&& \
     make -j8									&& \
     make install								&& \
     cd ${HOME}									&& \
