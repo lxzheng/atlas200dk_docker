@@ -13,7 +13,7 @@ do
 done
 
 if [ -n "$1" ]; then
-docker run -it --rm -e DISPLAY=$DISPLAY -v /dev/:/dev -v /tmp/:/tmp/ -v $bind_dir:${c_home}/AscendProject --privileged $1 bash
+docker run -it --rm -e DISPLAY=$DISPLAY -v /dev/:/dev -v /tmp/:/tmp/ -v $bind_dir:${c_home}/AscendProjects --privileged $1 bash
 else
    echo "Run error, Usage:$0 <docker_image> [bind_dir]"
 fi

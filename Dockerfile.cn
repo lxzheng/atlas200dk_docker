@@ -137,7 +137,7 @@ ASCEND_AICPU_PATH=${HOME}/Ascend/ascend-toolkit/latest			   	   \
 ASCEND_OPP_PATH=${HOME}/Ascend/ascend-toolkit/latest/opp			   \
 TOOLCHAIN_HOME=${HOME}/Ascend/ascend-toolkit/latest/toolkit			   \
 ASCEND_AICPU_PATH=${HOME}/Ascend/ascend-toolkit/latest				   \
-PRJ_HOME=${HOME}/AscendProject
+PRJ_HOME=${HOME}/AscendProjects
 
 RUN for dir in 'modelzoo' '.cache' '.config' '.local' '.mindstudio' '.ssh';do	   \
         ln -s ${PRJ_HOME}/${dir} ${HOME}/${dir};done
